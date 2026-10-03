@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>EssayHelp Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+  :root { --paper:#f4f7f5; --ink:#14262b; --muted:#54666a; --teal:#0f6b6b; --teal-dark:#0a5050; --red:#c8372d; --line:#cfdad6; --card:#fff; --soft:#e4efec;
+    --serif:"Newsreader",Georgia,serif; --sans:"Public Sans",system-ui,-apple-system,"Segoe UI",Arial,sans-serif; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); line-height:1.5; padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+  [hidden] { display:none !important; }
+  .wrap { max-width:760px; margin:0 auto; padding:0 20px 60px; }
+  header { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px 16px; padding:20px 0 8px; }
+  .brand { font-family:var(--serif); font-weight:600; font-size:22px; }
+  .brand span { color:var(--muted); font-weight:400; font-size:16px; margin-left:8px; }
+  nav { display:flex; gap:10px; align-items:center; } nav a { color:var(--teal); font-weight:500; text-decoration:none; }
+  input { font:inherit; color:var(--ink); background:#fff; border:1px solid #aebdb9; border-radius:6px; padding:9px 11px; width:100%; }
+  button { font:inherit; font-weight:600; cursor:pointer; border-radius:6px; padding:8px 14px; border:1px solid var(--teal); background:transparent; color:var(--teal); }
+  button.primary { background:var(--teal); color:#fff; } button.primary:hover { background:var(--teal-dark); }
+  button:hover:not(.primary):not(.tab) { background:var(--soft); }
+  button.plain { border-color:var(--line); color:var(--muted); font-weight:500; }
+  :is(button,input,a):focus-visible { outline:3px solid var(--teal); outline-offset:2px; }
+  .box { max-width:380px; margin:60px auto; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:24px; }
+  .box h1 { font-family:var(--serif); font-size:28px; margin:0 0 14px; }
+  .field { margin-bottom:12px; } label { display:block; font-weight:600; font-size:14px; margin-bottom:4px; }
+  .msg { color:var(--red); font-size:14px; min-height:1.3em; margin:6px 0; } .msg.ok { color:var(--teal); }
+  .switch { text-align:center; margin:14px 0 0; font-size:14px; color:var(--muted); }
+  .switch button { border:0; padding:0 4px; font-weight:600; text-decoration:underline; }
+  h2 { font-family:var(--serif); font-size:24px; margin:26px 0 8px; } h2 small { color:var(--muted); font-size:15px; font-family:var(--sans); font-weight:400; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:10px; }
+  .top { display:flex; justify-content:space-between; gap:10px; align-items:baseline; flex-wrap:wrap; }
+  .who { font-weight:600; font-size:17px; } .sub { color:var(--muted); font-size:14px; } .late { color:var(--red); font-weight:600; }
+  .note { margin:8px 0 0; font-size:15px; white-space:pre-wrap; }
+  .btns { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .badge { font-size:13px; font-weight:600; padding:2px 10px; border-radius:999px; border:1px solid var(--line); }
+  .s-quoted { background:#fdf3d8; border-color:#ecd9a0; } .s-progress { background:#dcecf4; border-color:#b3d3e4; }
+  .s-delivered { background:#e8e1f3; border-color:#cbbfe2; } .s-paid { background:#d9efe2; border-color:#a9d6bb; }
+  .empty { color:var(--muted); padding:6px 2px; }
+  @media (prefers-color-scheme:dark) {
+    :root { --paper:#0f1b1e; --ink:#e8f0ee; --muted:#9db0ac; --teal:#5cc2b8; --teal-dark:#7ad3ca; --red:#ff7a6e; --line:#28393d; --card:#162428; --soft:#1d3135; }
+    input { background:#0f1b1e; border-color:#3b5257; } button.primary { color:#0f1b1e; } .badge { background:transparent !important; }
+  }
+</style>
+</head>
+<body>
+<section id="login" class="box" hidden>
+  <h1 id="lTitle">Editor sign in</h1>
+  <div class="field" id="nameField" hidden><label for="lName">Name</label><input id="lName" autocomplete="name" maxlength="60"></div>
+  <div class="field"><label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="email"></div>
+  <div class="field"><label for="lPass">Password</label><input id="lPass" type="password" autocomplete="current-password" minlength="6"></div>
+  <p class="msg" id="lMsg" role="alert"></p>
+  <button class="primary" id="lGo" type="button" style="width:100%">Sign in</button>
+  <p class="switch"><span id="swText">New here?</span><button id="sw" type="button">Create account</button></p>
+</section>
+
+<section id="pending" class="box" hidden>
+  <h1>Almost there</h1>
+  <p>Your account is waiting for approval. Check back soon.</p>
+  <button class="signout" type="button">Sign out</button>
+</section>
+
+<div id="app" class="wrap" hidden>
+  <header>
+    <div class="brand">EssayHelp<span>Editor</span></div>
+    <nav><a href="dashboard.html" id="adminLink" hidden>Admin</a><button class="plain signout" type="button">Sign out</button></nav>
+  </header>
+  <p class="msg" id="msg" role="alert"></p>
+  <h2>My jobs <small id="mineN"></small></h2>
+  <div id="mine"></div>
+  <h2>Available <small id="availN"></small></h2>
+  <div id="avail"></div>
+</div>
+
+<script>
+(function () {
+  var CFG = window.APP_CONFIG || {};
+  var SB_URL = CFG.SUPABASE_URL, SB_KEY = CFG.SUPABASE_ANON_KEY;
+  if (!SB_URL || !SB_KEY) { document.body.innerHTML = "<p style='padding:24px;font-family:sans-serif'>Missing config.js. Copy config.example.js to config.js and fill it in.</p>"; return; }
+  var sb = supabase.createClient(SB_URL, SB_KEY);
+  var SERVICES = {
+    proof: { name: "Editing and proofreading", unit: "words" }, feedback: { name: "Feedback on a draft", unit: "words" },
+    tutor: { name: "Tutoring", unit: "hours" }, research: { name: "Research support", unit: "hours" }, package: { name: "Coaching package", unit: "fixed" }
+  };
+  var STATUS = { inquiry: "Inquiry", quoted: "To start", progress: "In progress", delivered: "Delivered", paid: "Done" };
+  var $ = function (id) { return document.getElementById(id); };
+  var me = null, signup = false;
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function pd(s) { if (!s) return null; var p = s.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function fd(s) { var d = pd(s); return d ? d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "No date"; }
+  function show(id) { ["login", "pending", "app"].forEach(function (x) { $(x).hidden = x !== id; }); }
+  function say(t) { $("msg").textContent = t || ""; }
+  function qtyText(j) { var s = SERVICES[j.service] || SERVICES.proof; return s.unit === "words" ? Number(j.qty).toLocaleString("en-US") + " words" : s.unit === "hours" ? j.qty + " h" : "Package"; }
+
+  async function boot() {
+    var s = (await sb.auth.getSession()).data.session;
+    if (!s) return show("login");
+    var r = await sb.from("profiles").select("*").eq("id", s.user.id).single();
+    me = r.data;
+    if (!me || me.role === "pending") return show("pending");
+    $("adminLink").hidden = me.role !== "admin";
+    show("app"); load();
+  }
+
+  async function load() {
+    var r = await sb.from("editor_jobs").select("*").order("due", { ascending: true, nullsFirst: false });
+    if (r.error) return say("Could not load jobs. " + r.error.message);
+    say("");
+    var rows = r.data || [], now = new Date(); now.setHours(0, 0, 0, 0);
+    var mine = rows.filter(function (j) { return j.assigned_to === me.id; });
+    var avail = rows.filter(function (j) { return !j.assigned_to; });
+    $("mineN").textContent = mine.length ? "(" + mine.length + ")" : "";
+    $("availN").textContent = avail.length ? "(" + avail.length + ")" : "";
+
+    function card(j, own) {
+      var late = (j.status === "quoted" || j.status === "progress") && j.due && pd(j.due) < now;
+      var b = "";
+      if (own) {
+        if (j.status === "quoted") b += "<button class='primary' data-act='progress' data-id='" + esc(j.id) + "'>Start</button>";
+        if (j.status === "progress") b += "<button class='primary' data-act='delivered' data-id='" + esc(j.id) + "'>Mark delivered</button>";
+        if (j.status === "delivered") b += "<button data-act='progress' data-id='" + esc(j.id) + "'>Reopen</button>";
+        if (j.status === "quoted" || j.status === "progress") b += "<button class='plain' data-act='release' data-id='" + esc(j.id) + "'>Release</button>";
+      } else b = "<button class='primary' data-act='claim' data-id='" + esc(j.id) + "'>Take this job</button>";
+      return "<div class='card'><div class='top'><span class='who'>" + esc(j.client) + "</span><span class='badge s-" + esc(j.status) + "'>" + esc(STATUS[j.status]) + "</span></div>" +
+        "<div class='sub'>" + esc((SERVICES[j.service] || {}).name) + " · " + esc(qtyText(j)) + " · <span class='" + (late ? "late" : "") + "'>" + (late ? "Overdue " : "Due ") + fd(j.due) + "</span></div>" +
+        (j.note ? "<p class='note'>" + esc(j.note) + "</p>" : "") + (b ? "<div class='btns'>" + b + "</div>" : "") + "</div>";
+    }
+    $("mine").innerHTML = mine.length ? mine.map(function (j) { return card(j, true); }).join("") : "<p class='empty'>Nothing assigned yet.</p>";
+    $("avail").innerHTML = avail.length ? avail.map(function (j) { return card(j, false); }).join("") : "<p class='empty'>No open jobs right now.</p>";
+  }
+
+  async function act(a, id) {
+    var r = a === "claim" ? await sb.rpc("claim_job", { job_id: id })
+          : a === "release" ? await sb.rpc("release_job", { job_id: id })
+          : await sb.rpc("set_job_status", { job_id: id, new_status: a });
+    if (r.error) say(r.error.message);
+    await load();
+    if (r.error) say(r.error.message);
+  }
+  $("app").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-act]"); if (!b) return;
+    b.disabled = true; act(b.getAttribute("data-act"), b.getAttribute("data-id"));
+  });
+
+  function setMode(s) {
+    signup = s;
+    $("lTitle").textContent = s ? "Create account" : "Editor sign in";
+    $("nameField").hidden = !s; $("lGo").textContent = s ? "Create account" : "Sign in";
+    $("swText").textContent = s ? "Have an account?" : "New here?"; $("sw").textContent = s ? "Sign in" : "Create account";
+    $("lPass").setAttribute("autocomplete", s ? "new-password" : "current-password"); $("lMsg").textContent = "";
+  }
+  $("sw").addEventListener("click", function () { setMode(!signup); });
+  $("lGo").addEventListener("click", async function () {
+    var m = $("lMsg"); m.className = "msg"; m.textContent = "";
+    var email = $("lEmail").value.trim(), pass = $("lPass").value;
+    if (!email || pass.length < 6) { m.textContent = "Enter your email and a password of 6+ characters."; return; }
+    if (signup) {
+      var r = await sb.auth.signUp({ email: email, password: pass, options: { data: { name: $("lName").value.trim() } } });
+      if (r.error) { m.textContent = r.error.message; return; }
+      if (r.data.session) boot(); else { m.className = "msg ok"; m.textContent = "Account created. Confirm your email if asked, then sign in."; setMode(false); m.className = "msg ok"; m.textContent = "Account created. Confirm your email if asked, then sign in."; }
+    } else {
+      var s = await sb.auth.signInWithPassword({ email: email, password: pass });
+      if (s.error) m.textContent = s.error.message; else boot();
+    }
+  });
+  $("lPass").addEventListener("keydown", function (e) { if (e.key === "Enter") $("lGo").click(); });
+  document.querySelectorAll(".signout").forEach(function (b) { b.addEventListener("click", async function () { await sb.auth.signOut(); me = null; show("login"); }); });
+
+  boot();
+})();
+</script>
+</body>
+</html>

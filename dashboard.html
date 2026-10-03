@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>EssayHelp Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+  :root { --paper:#f4f7f5; --ink:#14262b; --muted:#54666a; --teal:#0f6b6b; --teal-dark:#0a5050; --red:#c8372d; --line:#cfdad6; --card:#fff; --soft:#e4efec;
+    --serif:"Newsreader",Georgia,serif; --sans:"Public Sans",system-ui,-apple-system,"Segoe UI",Arial,sans-serif; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); line-height:1.5; padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+  [hidden] { display:none !important; }
+  .wrap { max-width:1040px; margin:0 auto; padding:0 20px 60px; }
+  header { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px 16px; padding:20px 0 8px; }
+  .brand { font-family:var(--serif); font-weight:600; font-size:22px; }
+  .brand span { color:var(--muted); font-weight:400; font-size:16px; margin-left:8px; }
+  nav { display:flex; gap:8px; align-items:center; }
+  nav a { color:var(--teal); font-weight:500; text-decoration:none; margin-right:6px; }
+  input, select, textarea { font:inherit; color:var(--ink); background:#fff; border:1px solid #aebdb9; border-radius:6px; padding:9px 11px; width:100%; }
+  textarea { min-height:64px; resize:vertical; }
+  button { font:inherit; font-weight:600; cursor:pointer; border-radius:6px; padding:9px 14px; border:1px solid var(--teal); background:transparent; color:var(--teal); }
+  button.primary { background:var(--teal); color:#fff; } button.primary:hover { background:var(--teal-dark); }
+  button:hover:not(.primary):not(.tab) { background:var(--soft); }
+  button.link { border:0; padding:2px 6px; font-weight:500; } button.danger { color:var(--red); border-color:var(--red); }
+  :is(button,input,select,textarea,a,summary):focus-visible { outline:3px solid var(--teal); outline-offset:2px; }
+  .box { max-width:380px; margin:60px auto; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:24px; }
+  .box h1 { font-family:var(--serif); font-size:28px; margin:0 0 14px; }
+  .field { margin-bottom:12px; } label { display:block; font-weight:600; font-size:14px; margin-bottom:4px; }
+  .msg { color:var(--red); font-size:14px; min-height:1.3em; margin:6px 0; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); border-top:1px solid var(--line); border-bottom:1px solid var(--line); margin:14px 0 22px; }
+  .stat { padding:14px 14px 14px 0; } .stat + .stat { padding-left:14px; border-left:1px solid var(--line); }
+  .stat .n { font-family:var(--serif); font-weight:600; font-size:32px; line-height:1.1; } .stat .l { color:var(--muted); font-size:14px; }
+  @media (max-width:640px) { .stats { grid-template-columns:1fr 1fr; } .stat, .stat + .stat { padding:12px 10px; border-left:0; } .stat:nth-child(even) { border-left:1px solid var(--line); } }
+  .bar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:12px; }
+  .tabs { display:flex; flex-wrap:wrap; gap:6px; flex:1 1 auto; }
+  .tab { font-size:14px; font-weight:500; color:var(--ink); border:1px solid var(--line); border-radius:999px; padding:4px 12px; }
+  .tab[aria-pressed="true"] { background:var(--teal); border-color:var(--teal); color:#fff; }
+  #q { width:180px; }
+  .jobs { background:var(--card); border:1px solid var(--line); border-radius:10px; }
+  .job { display:grid; grid-template-columns:1.3fr 1.1fr .7fr .8fr 1fr auto; gap:6px 12px; align-items:center; padding:11px 16px; border-top:1px solid var(--line); }
+  .job:first-child { border-top:0; } .job select { padding:6px 8px; font-size:14px; }
+  .who { font-weight:600; } .sub { color:var(--muted); font-size:13px; } .late { color:var(--red); font-weight:600; }
+  .badge { display:inline-block; font-size:13px; font-weight:600; padding:2px 10px; border-radius:999px; border:1px solid var(--line); }
+  .s-quoted { background:#fdf3d8; border-color:#ecd9a0; } .s-progress { background:#dcecf4; border-color:#b3d3e4; }
+  .s-delivered { background:#e8e1f3; border-color:#cbbfe2; } .s-paid { background:#d9efe2; border-color:#a9d6bb; } .s-inquiry { background:#eef1f0; }
+  .empty { padding:26px 18px; color:var(--muted); }
+  @media (max-width:820px) { .job { grid-template-columns:1fr auto; } .job > :not(:first-child):not(:last-child) { grid-column:1; } .job > :last-child { grid-column:2; grid-row:1; } }
+  details { margin-top:24px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 16px; }
+  summary { cursor:pointer; font-weight:600; }
+  .person { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; padding:8px 0; border-top:1px solid var(--line); margin-top:8px; }
+  .person select { width:auto; padding:6px 8px; }
+  dialog { border:1px solid var(--line); border-radius:12px; padding:0; width:min(540px,94vw); background:var(--card); color:var(--ink); }
+  dialog::backdrop { background:rgba(10,25,28,.5); }
+  .dlg { padding:20px; } .dlg h2 { font-family:var(--serif); margin:0 0 12px; font-size:24px; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; } @media (max-width:520px) { .row { grid-template-columns:1fr; } }
+  .acts { display:flex; gap:8px; margin-top:6px; } .acts .sp { flex:1; }
+  @media (prefers-color-scheme:dark) {
+    :root { --paper:#0f1b1e; --ink:#e8f0ee; --muted:#9db0ac; --teal:#5cc2b8; --teal-dark:#7ad3ca; --red:#ff7a6e; --line:#28393d; --card:#162428; --soft:#1d3135; }
+    input,select,textarea { background:#0f1b1e; border-color:#3b5257; } button.primary,.tab[aria-pressed="true"] { color:#0f1b1e; }
+    .badge { background:transparent !important; }
+  }
+</style>
+</head>
+<body>
+<section id="login" class="box" hidden>
+  <h1>Admin sign in</h1>
+  <div class="field"><label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="email"></div>
+  <div class="field"><label for="lPass">Password</label><input id="lPass" type="password" autocomplete="current-password"></div>
+  <p class="msg" id="lMsg" role="alert"></p>
+  <button class="primary" id="lGo" type="button" style="width:100%">Sign in</button>
+</section>
+
+<section id="denied" class="box" hidden>
+  <h1>Admins only</h1>
+  <p>This page is for admins. <a href="editor.html">Go to the editor page</a>.</p>
+  <button class="signout" type="button">Sign out</button>
+</section>
+
+<div id="app" class="wrap" hidden>
+  <header>
+    <div class="brand">EssayHelp<span>Admin</span></div>
+    <nav><a href="editor.html">Editor view</a><button class="primary" id="add" type="button">Add job</button><button class="signout" type="button">Sign out</button></nav>
+  </header>
+  <p class="msg" id="msg" role="alert"></p>
+
+  <section class="stats" aria-label="Summary">
+    <div class="stat"><div class="n" id="stPipe">$0</div><div class="l">Pipeline</div></div>
+    <div class="stat"><div class="n" id="stWork">0</div><div class="l">In progress</div></div>
+    <div class="stat"><div class="n" id="stOwed">$0</div><div class="l">To collect</div></div>
+    <div class="stat"><div class="n" id="stPaid">$0</div><div class="l">Paid this month</div></div>
+  </section>
+
+  <div class="bar">
+    <div class="tabs" id="tabs" role="group" aria-label="Filter"></div>
+    <input id="q" type="search" placeholder="Search" aria-label="Search">
+  </div>
+  <div class="jobs" id="jobs"></div>
+
+  <details id="team"><summary id="teamSum">Team</summary><div id="people"></div></details>
+  <p style="margin-top:18px"><button type="button" id="csv">Export CSV</button></p>
+</div>
+
+<dialog id="dlg">
+  <form class="dlg" id="form">
+    <h2 id="dlgTitle">Add job</h2>
+    <div class="row">
+      <div class="field"><label for="fClient">Client</label><input id="fClient" required maxlength="80"></div>
+      <div class="field"><label for="fContact">Contact</label><input id="fContact" maxlength="120"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="fService">Service</label><select id="fService"></select></div>
+      <div class="field"><label for="fQty" id="fQtyLabel">Words</label><input id="fQty" type="number" min="0" step="any"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="fAmount">Amount ($)</label><input id="fAmount" type="number" min="0" step="any"></div>
+      <div class="field"><label for="fStatus">Status</label><select id="fStatus"></select></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="fDue">Due</label><input id="fDue" type="date"></div>
+      <div class="field"><label for="fAssign">Assign to</label><select id="fAssign"></select></div>
+    </div>
+    <div class="field"><label for="fNote">Notes</label><textarea id="fNote" maxlength="1000"></textarea></div>
+    <div class="acts">
+      <button type="button" class="danger" id="del" hidden>Delete</button>
+      <span class="sp"></span>
+      <button type="button" id="cancel">Cancel</button>
+      <button class="primary" type="submit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(function () {
+  var CFG = window.APP_CONFIG || {};
+  var SB_URL = CFG.SUPABASE_URL, SB_KEY = CFG.SUPABASE_ANON_KEY;
+  if (!SB_URL || !SB_KEY) { document.body.innerHTML = "<p style='padding:24px;font-family:sans-serif'>Missing config.js. Copy config.example.js to config.js and fill it in.</p>"; return; }
+  var sb = supabase.createClient(SB_URL, SB_KEY);
+  var SERVICES = {
+    proof:    { name: "Editing and proofreading", unit: "words", per: 1000, price: 13 },
+    feedback: { name: "Feedback on a draft",      unit: "words", per: 1000, price: 30 },
+    tutor:    { name: "Tutoring",                 unit: "hours", per: 1,    price: 50 },
+    research: { name: "Research support",         unit: "hours", per: 1,    price: 50 },
+    package:  { name: "Coaching package",         unit: "fixed", per: 1,    price: 199 }
+  };
+  var STATUS = { inquiry: "Inquiry", quoted: "Quoted", progress: "In progress", delivered: "Delivered", paid: "Paid" };
+  var $ = function (id) { return document.getElementById(id); };
+  var jobs = [], people = [], filter = "all", editing = null, touched = false;
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function money(n) { return "$" + Math.round(n).toLocaleString("en-US"); }
+  function midnight() { var d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function pd(s) { if (!s) return null; var p = s.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function fd(s) { var d = pd(s); return d ? d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "No date"; }
+  function iso() { var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  function say(t) { $("msg").textContent = t || ""; }
+  function show(id) { ["login", "denied", "app"].forEach(function (x) { $(x).hidden = x !== id; }); }
+  function qtyText(j) { var s = SERVICES[j.service] || SERVICES.proof; return s.unit === "words" ? Number(j.qty).toLocaleString("en-US") + " words" : s.unit === "hours" ? j.qty + " h" : "Package"; }
+  function person(id) { var p = people.filter(function (x) { return x.id === id; })[0]; return p ? (p.name || p.email) : ""; }
+  function workers() { return people.filter(function (p) { return p.role === "editor" || p.role === "admin"; }); }
+
+  async function boot() {
+    var s = (await sb.auth.getSession()).data.session;
+    if (!s) return show("login");
+    var r = await sb.from("profiles").select("*").eq("id", s.user.id).single();
+    if (!r.data || r.data.role !== "admin") return show("denied");
+    show("app"); refresh();
+  }
+  async function refresh() {
+    var a = await Promise.all([sb.from("jobs").select("*").order("due", { ascending: true, nullsFirst: false }), sb.from("profiles").select("*").order("created_at")]);
+    if (a[0].error || a[1].error) say("Could not load data. " + ((a[0].error || a[1].error).message));
+    else say("");
+    jobs = a[0].data || []; people = a[1].data || []; render();
+  }
+
+  function render() {
+    var now = midnight(), pipe = 0, work = 0, owed = 0, paid = 0;
+    jobs.forEach(function (j) {
+      var a = Number(j.amount) || 0;
+      if (j.status === "inquiry" || j.status === "quoted") pipe += a;
+      if (j.status === "progress") work++;
+      if (j.status === "delivered") owed += a;
+      if (j.status === "paid" && j.paid_at) { var p = pd(j.paid_at); if (p.getMonth() === now.getMonth() && p.getFullYear() === now.getFullYear()) paid += a; }
+    });
+    $("stPipe").textContent = money(pipe); $("stWork").textContent = work; $("stOwed").textContent = money(owed); $("stPaid").textContent = money(paid);
+
+    $("tabs").innerHTML = ["all"].concat(Object.keys(STATUS)).map(function (k) {
+      var n = k === "all" ? jobs.length : jobs.filter(function (j) { return j.status === k; }).length;
+      return "<button class='tab' type='button' data-f='" + k + "' aria-pressed='" + (filter === k) + "'>" + (k === "all" ? "All" : STATUS[k]) + " " + n + "</button>";
+    }).join("");
+
+    var q = $("q").value.trim().toLowerCase();
+    var list = jobs.filter(function (j) { return (filter === "all" || j.status === filter) && (!q || (j.client + " " + (j.note || "")).toLowerCase().indexOf(q) !== -1); });
+    var opts = workers();
+    $("jobs").innerHTML = list.length ? list.map(function (j) {
+      var late = (j.status === "quoted" || j.status === "progress" || j.status === "inquiry") && j.due && pd(j.due) < now;
+      var sel = "<select data-assign='" + esc(j.id) + "' aria-label='Assign " + esc(j.client) + "'><option value=''>Unassigned</option>" +
+        opts.map(function (p) { return "<option value='" + esc(p.id) + "'" + (p.id === j.assigned_to ? " selected" : "") + ">" + esc(p.name || p.email) + "</option>"; }).join("") + "</select>";
+      return "<div class='job'><div><div class='who'>" + esc(j.client) + "</div><div class='sub'>" + esc(j.contact || "") + "</div></div>" +
+        "<div>" + esc((SERVICES[j.service] || {}).name) + "<div class='sub'>" + esc(qtyText(j)) + "</div></div>" +
+        "<div><strong>" + money(Number(j.amount) || 0) + "</strong><div class='sub " + (late ? "late" : "") + "'>" + (late ? "Overdue " : "Due ") + fd(j.due) + "</div></div>" +
+        "<div><span class='badge s-" + esc(j.status) + "'>" + esc(STATUS[j.status]) + "</span></div><div>" + sel + "</div>" +
+        "<div><button class='link' type='button' data-edit='" + esc(j.id) + "'>Edit</button></div></div>";
+    }).join("") : "<div class='empty'>" + (jobs.length ? "Nothing here." : "No jobs yet.") + "</div>";
+
+    var pend = people.filter(function (p) { return p.role === "pending"; }).length;
+    $("teamSum").textContent = "Team" + (pend ? " (" + pend + " waiting)" : "");
+    $("people").innerHTML = people.map(function (p) {
+      return "<div class='person'><span>" + esc(p.name || "") + " <span class='sub'>" + esc(p.email) + "</span></span><select data-role='" + esc(p.id) + "' aria-label='Role for " + esc(p.email) + "'>" +
+        ["pending", "editor", "admin"].map(function (r) { return "<option value='" + r + "'" + (p.role === r ? " selected" : "") + ">" + r + "</option>"; }).join("") + "</select></div>";
+    }).join("");
+  }
+
+  function suggest() {
+    var s = SERVICES[$("fService").value], n = parseFloat($("fQty").value) || 0;
+    return s.unit === "words" ? Math.max(15, Math.round(n / s.per * s.price)) : s.unit === "hours" ? Math.round(n * s.price) : s.price;
+  }
+  function syncQty() {
+    var s = SERVICES[$("fService").value];
+    $("fQtyLabel").textContent = s.unit === "words" ? "Words" : s.unit === "hours" ? "Hours" : "Qty";
+    $("fQty").disabled = s.unit === "fixed";
+    if (s.unit === "fixed") $("fQty").value = 1;
+    if (!touched) $("fAmount").value = suggest();
+  }
+  function openDlg(j) {
+    editing = j || null; touched = !!j;
+    $("dlgTitle").textContent = j ? "Edit job" : "Add job"; $("del").hidden = !j;
+    $("fClient").value = j ? j.client : ""; $("fContact").value = j ? j.contact || "" : "";
+    $("fService").value = j ? j.service : "proof"; $("fQty").value = j ? j.qty : 1500;
+    $("fStatus").value = j ? j.status : "inquiry"; $("fDue").value = j ? j.due || "" : "";
+    $("fNote").value = j ? j.note || "" : "";
+    $("fAssign").innerHTML = "<option value=''>Unassigned</option>" + workers().map(function (p) { return "<option value='" + esc(p.id) + "'>" + esc(p.name || p.email) + "</option>"; }).join("");
+    $("fAssign").value = j && j.assigned_to ? j.assigned_to : "";
+    syncQty(); if (j) $("fAmount").value = j.amount;
+    $("dlg").showModal(); $("fClient").focus();
+  }
+
+  $("fService").innerHTML = Object.keys(SERVICES).map(function (k) { return "<option value='" + k + "'>" + SERVICES[k].name + "</option>"; }).join("");
+  $("fStatus").innerHTML = Object.keys(STATUS).map(function (k) { return "<option value='" + k + "'>" + STATUS[k] + "</option>"; }).join("");
+
+  $("lGo").addEventListener("click", async function () {
+    $("lMsg").textContent = "";
+    var r = await sb.auth.signInWithPassword({ email: $("lEmail").value.trim(), password: $("lPass").value });
+    if (r.error) $("lMsg").textContent = r.error.message; else boot();
+  });
+  $("lPass").addEventListener("keydown", function (e) { if (e.key === "Enter") $("lGo").click(); });
+  document.querySelectorAll(".signout").forEach(function (b) { b.addEventListener("click", async function () { await sb.auth.signOut(); show("login"); }); });
+
+  $("add").addEventListener("click", function () { openDlg(null); });
+  $("cancel").addEventListener("click", function () { $("dlg").close(); });
+  $("fService").addEventListener("change", syncQty);
+  $("fQty").addEventListener("input", function () { if (!touched) $("fAmount").value = suggest(); });
+  $("fAmount").addEventListener("input", function () { touched = true; });
+  $("q").addEventListener("input", render);
+
+  $("form").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var st = $("fStatus").value;
+    var rec = {
+      client: $("fClient").value.trim(), contact: $("fContact").value.trim() || null, service: $("fService").value,
+      qty: parseFloat($("fQty").value) || 1, amount: parseFloat($("fAmount").value) || 0, status: st,
+      due: $("fDue").value || null, note: $("fNote").value.trim() || null, assigned_to: $("fAssign").value || null,
+      paid_at: st === "paid" ? ((editing && editing.paid_at) || iso()) : null
+    };
+    var r = editing ? await sb.from("jobs").update(rec).eq("id", editing.id) : await sb.from("jobs").insert(rec);
+    if (r.error) { say(r.error.message); return; }
+    $("dlg").close(); refresh();
+  });
+  $("del").addEventListener("click", async function () {
+    if (!editing || !confirm("Delete this job?")) return;
+    var r = await sb.from("jobs").delete().eq("id", editing.id);
+    if (r.error) say(r.error.message); else { $("dlg").close(); refresh(); }
+  });
+
+  $("tabs").addEventListener("click", function (e) { var b = e.target.closest("[data-f]"); if (b) { filter = b.getAttribute("data-f"); render(); } });
+  $("jobs").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-edit]"); if (!b) return;
+    var j = jobs.filter(function (x) { return x.id === b.getAttribute("data-edit"); })[0]; if (j) openDlg(j);
+  });
+  $("jobs").addEventListener("change", async function (e) {
+    var id = e.target.getAttribute("data-assign"); if (!id) return;
+    var r = await sb.from("jobs").update({ assigned_to: e.target.value || null }).eq("id", id);
+    if (r.error) say(r.error.message); refresh();
+  });
+  $("people").addEventListener("change", async function (e) {
+    var id = e.target.getAttribute("data-role"); if (!id) return;
+    var r = await sb.from("profiles").update({ role: e.target.value }).eq("id", id);
+    if (r.error) say(r.error.message); refresh();
+  });
+  $("csv").addEventListener("click", function () {
+    var rows = [["Client", "Contact", "Service", "Qty", "Amount", "Status", "Due", "Assigned", "Paid on", "Notes"]].concat(jobs.map(function (j) {
+      return [j.client, j.contact, (SERVICES[j.service] || {}).name, j.qty, j.amount, STATUS[j.status], j.due, person(j.assigned_to), j.paid_at, j.note];
+    }));
+    var csv = rows.map(function (r) { return r.map(function (c) { var s = String(c == null ? "" : c); if (/^[=+\-@]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g, '""') + '"'; }).join(","); }).join("\n");
+    var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "essayhelp-jobs.csv";
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+
+  boot();
+})();
+</script>
+</body>
+</html>
