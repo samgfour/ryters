@@ -118,13 +118,14 @@
       <div class="field"><label for="fQty" id="fQtyLabel">Words</label><input id="fQty" type="number" min="0" step="any"></div>
     </div>
     <div class="row">
-      <div class="field"><label for="fAmount">Amount ($)</label><input id="fAmount" type="number" min="0" step="any"></div>
-      <div class="field"><label for="fStatus">Status</label><select id="fStatus"></select></div>
+      <div class="field"><label for="fAmount">Client pays ($)</label><input id="fAmount" type="number" min="0" step="any"></div>
+      <div class="field"><label for="fPay">Editor gets ($)</label><input id="fPay" type="number" min="0" step="any"></div>
     </div>
     <div class="row">
+      <div class="field"><label for="fStatus">Status</label><select id="fStatus"></select></div>
       <div class="field"><label for="fDue">Due</label><input id="fDue" type="date"></div>
-      <div class="field"><label for="fAssign">Assign to</label><select id="fAssign"></select></div>
     </div>
+    <div class="field"><label for="fAssign">Assign to</label><select id="fAssign"></select></div>
     <div class="field"><label for="fNote">Notes</label><textarea id="fNote" maxlength="1000"></textarea></div>
     <div class="acts">
       <button type="button" class="danger" id="del" hidden>Delete</button>
@@ -150,7 +151,8 @@
   };
   var STATUS = { inquiry: "Inquiry", quoted: "Quoted", progress: "In progress", delivered: "Delivered", paid: "Paid" };
   var $ = function (id) { return document.getElementById(id); };
-  var jobs = [], people = [], filter = "all", editing = null, touched = false;
+  var EDITOR_SHARE = 0.6; // suggested editor pay as a share of the client price
+  var jobs = [], people = [], filter = "all", editing = null, touched = false, payTouched = false;
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function money(n) { return "$" + Math.round(n).toLocaleString("en-US"); }
@@ -203,7 +205,7 @@
         opts.map(function (p) { return "<option value='" + esc(p.id) + "'" + (p.id === j.assigned_to ? " selected" : "") + ">" + esc(p.name || p.email) + "</option>"; }).join("") + "</select>";
       return "<div class='job'><div><div class='who'>" + esc(j.client) + "</div><div class='sub'>" + esc(j.contact || "") + "</div></div>" +
         "<div>" + esc((SERVICES[j.service] || {}).name) + "<div class='sub'>" + esc(qtyText(j)) + "</div></div>" +
-        "<div><strong>" + money(Number(j.amount) || 0) + "</strong><div class='sub " + (late ? "late" : "") + "'>" + (late ? "Overdue " : "Due ") + fd(j.due) + "</div></div>" +
+        "<div><strong>" + money(Number(j.amount) || 0) + "</strong><div class='sub'>Editor " + money(Number(j.editor_pay) || 0) + "</div><div class='sub " + (late ? "late" : "") + "'>" + (late ? "Overdue " : "Due ") + fd(j.due) + "</div></div>" +
         "<div><span class='badge s-" + esc(j.status) + "'>" + esc(STATUS[j.status]) + "</span></div><div>" + sel + "</div>" +
         "<div><button class='link' type='button' data-edit='" + esc(j.id) + "'>Edit</button></div></div>";
     }).join("") : "<div class='empty'>" + (jobs.length ? "Nothing here." : "No jobs yet.") + "</div>";
@@ -226,9 +228,11 @@
     $("fQty").disabled = s.unit === "fixed";
     if (s.unit === "fixed") $("fQty").value = 1;
     if (!touched) $("fAmount").value = suggest();
+    syncPay();
   }
+  function syncPay() { if (!payTouched) $("fPay").value = Math.round((parseFloat($("fAmount").value) || 0) * EDITOR_SHARE); }
   function openDlg(j) {
-    editing = j || null; touched = !!j;
+    editing = j || null; touched = !!j; payTouched = !!j;
     $("dlgTitle").textContent = j ? "Edit job" : "Add job"; $("del").hidden = !j;
     $("fClient").value = j ? j.client : ""; $("fContact").value = j ? j.contact || "" : "";
     $("fService").value = j ? j.service : "proof"; $("fQty").value = j ? j.qty : 1500;
@@ -236,7 +240,7 @@
     $("fNote").value = j ? j.note || "" : "";
     $("fAssign").innerHTML = "<option value=''>Unassigned</option>" + workers().map(function (p) { return "<option value='" + esc(p.id) + "'>" + esc(p.name || p.email) + "</option>"; }).join("");
     $("fAssign").value = j && j.assigned_to ? j.assigned_to : "";
-    syncQty(); if (j) $("fAmount").value = j.amount;
+    syncQty(); if (j) { $("fAmount").value = j.amount; $("fPay").value = j.editor_pay || 0; }
     $("dlg").showModal(); $("fClient").focus();
   }
 
@@ -254,8 +258,9 @@
   $("add").addEventListener("click", function () { openDlg(null); });
   $("cancel").addEventListener("click", function () { $("dlg").close(); });
   $("fService").addEventListener("change", syncQty);
-  $("fQty").addEventListener("input", function () { if (!touched) $("fAmount").value = suggest(); });
-  $("fAmount").addEventListener("input", function () { touched = true; });
+  $("fQty").addEventListener("input", function () { if (!touched) $("fAmount").value = suggest(); syncPay(); });
+  $("fAmount").addEventListener("input", function () { touched = true; syncPay(); });
+  $("fPay").addEventListener("input", function () { payTouched = true; });
   $("q").addEventListener("input", render);
 
   $("form").addEventListener("submit", async function (e) {
@@ -263,7 +268,7 @@
     var st = $("fStatus").value;
     var rec = {
       client: $("fClient").value.trim(), contact: $("fContact").value.trim() || null, service: $("fService").value,
-      qty: parseFloat($("fQty").value) || 1, amount: parseFloat($("fAmount").value) || 0, status: st,
+      qty: parseFloat($("fQty").value) || 1, amount: parseFloat($("fAmount").value) || 0, editor_pay: parseFloat($("fPay").value) || 0, status: st,
       due: $("fDue").value || null, note: $("fNote").value.trim() || null, assigned_to: $("fAssign").value || null,
       paid_at: st === "paid" ? ((editing && editing.paid_at) || iso()) : null
     };
@@ -293,8 +298,8 @@
     if (r.error) say(r.error.message); refresh();
   });
   $("csv").addEventListener("click", function () {
-    var rows = [["Client", "Contact", "Service", "Qty", "Amount", "Status", "Due", "Assigned", "Paid on", "Notes"]].concat(jobs.map(function (j) {
-      return [j.client, j.contact, (SERVICES[j.service] || {}).name, j.qty, j.amount, STATUS[j.status], j.due, person(j.assigned_to), j.paid_at, j.note];
+    var rows = [["Client", "Contact", "Service", "Qty", "Amount", "Editor pay", "Status", "Due", "Assigned", "Paid on", "Notes"]].concat(jobs.map(function (j) {
+      return [j.client, j.contact, (SERVICES[j.service] || {}).name, j.qty, j.amount, j.editor_pay, STATUS[j.status], j.due, person(j.assigned_to), j.paid_at, j.note];
     }));
     var csv = rows.map(function (r) { return r.map(function (c) { var s = String(c == null ? "" : c); if (/^[=+\-@]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g, '""') + '"'; }).join(","); }).join("\n");
     var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "essayhelp-jobs.csv";

@@ -37,6 +37,7 @@
   .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:10px; }
   .top { display:flex; justify-content:space-between; gap:10px; align-items:baseline; flex-wrap:wrap; }
   .who { font-weight:600; font-size:17px; } .sub { color:var(--muted); font-size:14px; } .late { color:var(--red); font-weight:600; }
+  .pay { margin-top:8px; color:var(--muted); font-size:14px; } .pay strong { color:var(--teal); font-family:var(--serif); font-size:22px; font-weight:600; margin-left:4px; }
   .note { margin:8px 0 0; font-size:15px; white-space:pre-wrap; }
   .btns { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
   .badge { font-size:13px; font-weight:600; padding:2px 10px; border-radius:999px; border:1px solid var(--line); }
@@ -97,6 +98,7 @@
   function fd(s) { var d = pd(s); return d ? d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "No date"; }
   function show(id) { ["login", "pending", "app"].forEach(function (x) { $(x).hidden = x !== id; }); }
   function say(t) { $("msg").textContent = t || ""; }
+  function money(n) { return "$" + Math.round(n).toLocaleString("en-US"); }
   function qtyText(j) { var s = SERVICES[j.service] || SERVICES.proof; return s.unit === "words" ? Number(j.qty).toLocaleString("en-US") + " words" : s.unit === "hours" ? j.qty + " h" : "Package"; }
 
   async function boot() {
@@ -130,7 +132,7 @@
       } else b = "<button class='primary' data-act='claim' data-id='" + esc(j.id) + "'>Take this job</button>";
       return "<div class='card'><div class='top'><span class='who'>" + esc(j.client) + "</span><span class='badge s-" + esc(j.status) + "'>" + esc(STATUS[j.status]) + "</span></div>" +
         "<div class='sub'>" + esc((SERVICES[j.service] || {}).name) + " · " + esc(qtyText(j)) + " · <span class='" + (late ? "late" : "") + "'>" + (late ? "Overdue " : "Due ") + fd(j.due) + "</span></div>" +
-        (j.note ? "<p class='note'>" + esc(j.note) + "</p>" : "") + (b ? "<div class='btns'>" + b + "</div>" : "") + "</div>";
+        "<div class='pay'>You earn <strong>" + (Number(j.editor_pay) > 0 ? money(Number(j.editor_pay)) : "TBC") + "</strong></div>" + (j.note ? "<p class='note'>" + esc(j.note) + "</p>" : "") + (b ? "<div class='btns'>" + b + "</div>" : "") + "</div>";
     }
     $("mine").innerHTML = mine.length ? mine.map(function (j) { return card(j, true); }).join("") : "<p class='empty'>Nothing assigned yet.</p>";
     $("avail").innerHTML = avail.length ? avail.map(function (j) { return card(j, false); }).join("") : "<p class='empty'>No open jobs right now.</p>";
