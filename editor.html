@@ -33,6 +33,10 @@
   .msg { color:var(--red); font-size:14px; min-height:1.3em; margin:6px 0; } .msg.ok { color:var(--teal); }
   .switch { text-align:center; margin:14px 0 0; font-size:14px; color:var(--muted); }
   .switch button { border:0; padding:0 4px; font-weight:600; text-decoration:underline; }
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid var(--line); border-bottom:1px solid var(--line); margin:12px 0 4px; }
+  .stat { padding:12px 10px 12px 0; } .stat + .stat { padding-left:12px; border-left:1px solid var(--line); }
+  .stat .n { font-family:var(--serif); font-weight:600; font-size:28px; line-height:1.1; } .stat .n.hi { color:var(--teal); } .stat .l { color:var(--muted); font-size:13px; }
+  @media (max-width:560px) { .stats { grid-template-columns:1fr 1fr; } .stat, .stat + .stat { padding:12px 10px; border-left:0; } .stat:nth-child(even) { border-left:1px solid var(--line); } .stat:nth-child(n+3) { border-top:1px solid var(--line); } }
   h2 { font-family:var(--serif); font-size:24px; margin:26px 0 8px; } h2 small { color:var(--muted); font-size:15px; font-family:var(--sans); font-weight:400; }
   .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:10px; }
   .top { display:flex; justify-content:space-between; gap:10px; align-items:baseline; flex-wrap:wrap; }
@@ -73,6 +77,12 @@
     <nav><a href="dashboard.html" id="adminLink" hidden>Admin</a><button class="plain signout" type="button">Sign out</button></nav>
   </header>
   <p class="msg" id="msg" role="alert"></p>
+  <section class="stats" aria-label="My summary">
+    <div class="stat"><div class="n hi" id="stEarn">$0</div><div class="l">To earn</div></div>
+    <div class="stat"><div class="n" id="stWork">0</div><div class="l">In progress</div></div>
+    <div class="stat"><div class="n" id="stWait">$0</div><div class="l">Delivered</div></div>
+    <div class="stat"><div class="n" id="stDone">$0</div><div class="l">Completed</div></div>
+  </section>
   <h2>My jobs <small id="mineN"></small></h2>
   <div id="mine"></div>
   <h2>Available <small id="availN"></small></h2>
@@ -118,6 +128,11 @@
     var rows = r.data || [], now = new Date(); now.setHours(0, 0, 0, 0);
     var mine = rows.filter(function (j) { return j.assigned_to === me.id; });
     var avail = rows.filter(function (j) { return !j.assigned_to; });
+    function sum(st) { return mine.filter(function (j) { return st.indexOf(j.status) !== -1; }).reduce(function (t, j) { return t + (Number(j.editor_pay) || 0); }, 0); }
+    $("stEarn").textContent = money(sum(["quoted", "progress"]));
+    $("stWork").textContent = mine.filter(function (j) { return j.status === "progress"; }).length;
+    $("stWait").textContent = money(sum(["delivered"]));
+    $("stDone").textContent = money(sum(["paid"]));
     $("mineN").textContent = mine.length ? "(" + mine.length + ")" : "";
     $("availN").textContent = avail.length ? "(" + avail.length + ")" : "";
 
